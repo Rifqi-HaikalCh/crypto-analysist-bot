@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   Zap,
   RefreshCw,
+  Brain,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,6 +24,7 @@ import {
 } from '@/lib/supabase';
 import { signOut, getCurrentUser } from '@/lib/auth';
 import type { User } from '@supabase/supabase-js';
+import AnalysisModal from '@/components/analysis-modal';
 
 // ==========================================
 // Types
@@ -106,6 +108,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [analyzingTarget, setAnalyzingTarget] = useState<ScalpingTarget | null>(null);
 
   // --- Data Fetching ---
   const fetchTargets = useCallback(async () => {
@@ -420,18 +423,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         </span>
                       </div>
 
-                      {/* Delete Button */}
-                      <button
-                        onClick={() => handleDelete(target.id, target.symbol)}
-                        disabled={deletingId === target.id}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
-                      >
-                        {deletingId === target.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-1.5">
+                        {/* Analyze AI Button */}
+                        <button
+                          onClick={() => setAnalyzingTarget(target)}
+                          title="Analisis AI"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-all hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-400"
+                        >
+                          <Brain className="h-4 w-4" />
+                        </button>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => handleDelete(target.id, target.symbol)}
+                          disabled={deletingId === target.id}
+                          title="Hapus target"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-all hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                        >
+                          {deletingId === target.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Price Info */}
@@ -487,6 +503,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           )}
         </section>
       </main>
+
+      {/* ====== Analysis Modal ====== */}
+      {analyzingTarget && (
+        <AnalysisModal
+          symbol={analyzingTarget.symbol}
+          entryPrice={analyzingTarget.entry_price}
+          isOpen={!!analyzingTarget}
+          onClose={() => setAnalyzingTarget(null)}
+        />
+      )}
     </div>
   );
 }

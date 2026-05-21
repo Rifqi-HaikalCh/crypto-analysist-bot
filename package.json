@@ -11,6 +11,7 @@
     "worker:dev": "node --watch worker/index.js"
   },
   "dependencies": {
+    "@google/genai": "^2.5.0",
     "@supabase/supabase-js": "^2.106.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
