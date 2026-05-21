@@ -30,6 +30,7 @@ import SymbolSearch from '@/components/symbol-search';
 import PriceChart from '@/components/price-chart';
 import MarketTicker from '@/components/market-ticker';
 import WatchlistSection from '@/components/watchlist-section';
+import TelegramTestCard from '@/components/telegram-test-card';
 
 // ==========================================
 // Types
@@ -342,6 +343,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </AnimatePresence>
           </div>
         </motion.section>
+
+        {/* --- Telegram Test Card --- */}
+        <div className="mb-8">
+          <TelegramTestCard />
+        </div>
 
         {/* --- Active Targets Section --- */}
         <section>
