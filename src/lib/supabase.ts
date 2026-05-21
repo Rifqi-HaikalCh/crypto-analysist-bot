@@ -1,23 +1,33 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // ==========================================
-// Supabase Client Initialization
+// Supabase Client Initialization (Lazy Singleton)
 // ==========================================
+// Menggunakan lazy init agar tidak crash saat Next.js
+// melakukan server-side module evaluation.
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Missing Supabase environment variables. Check .env.local file."
-  );
-}
+let _supabase: SupabaseClient | null = null;
 
 /**
  * Supabase client (anon/publishable key).
  * Digunakan di client-side — RLS otomatis aktif berdasarkan session user.
+ * Lazy-initialized untuk menghindari error saat SSR module evaluation.
  */
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    if (!_supabase) {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!url || !key) {
+        throw new Error(
+          "Missing Supabase environment variables. Check .env.local file."
+        );
+      }
+      _supabase = createClient(url, key);
+    }
+    return (_supabase as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
 
 // ==========================================
 // Type Definitions
