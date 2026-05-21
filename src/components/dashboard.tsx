@@ -14,6 +14,7 @@ import {
   Zap,
   RefreshCw,
   Brain,
+  LineChart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -25,6 +26,8 @@ import {
 import { signOut, getCurrentUser } from '@/lib/auth';
 import type { User } from '@supabase/supabase-js';
 import AnalysisModal from '@/components/analysis-modal';
+import SymbolSearch from '@/components/symbol-search';
+import PriceChart from '@/components/price-chart';
 
 // ==========================================
 // Types
@@ -109,6 +112,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [analyzingTarget, setAnalyzingTarget] = useState<ScalpingTarget | null>(null);
+  const [chartingTarget, setChartingTarget] = useState<ScalpingTarget | null>(null);
 
   // --- Data Fetching ---
   const fetchTargets = useCallback(async () => {
@@ -263,14 +267,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
             <form onSubmit={handleSubmit}>
               <div className="flex flex-col gap-3 sm:flex-row">
-                {/* Symbol Input */}
+                {/* Symbol Search with Autocomplete */}
                 <div className="flex-1">
-                  <input
-                    type="text"
+                  <SymbolSearch
                     value={symbol}
-                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                    placeholder="BTCTHB"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-800/60 px-4 py-3 text-sm font-medium uppercase text-white placeholder:text-slate-500 transition-all focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+                    onChange={setSymbol}
+                    placeholder="Cari koin... (BTCTHB, ETHTHB)"
                   />
                 </div>
 
@@ -425,6 +427,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                       {/* Action Buttons */}
                       <div className="flex items-center gap-1.5">
+                        {/* Chart Button */}
+                        <button
+                          onClick={() => setChartingTarget(target)}
+                          title="Lihat Grafik"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-all hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-400"
+                        >
+                          <LineChart className="h-4 w-4" />
+                        </button>
+
                         {/* Analyze AI Button */}
                         <button
                           onClick={() => setAnalyzingTarget(target)}
@@ -511,6 +522,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           entryPrice={analyzingTarget.entry_price}
           isOpen={!!analyzingTarget}
           onClose={() => setAnalyzingTarget(null)}
+        />
+      )}
+
+      {/* ====== Price Chart Modal ====== */}
+      {chartingTarget && (
+        <PriceChart
+          symbol={chartingTarget.symbol}
+          symbolType="GLOBAL"
+          isOpen={!!chartingTarget}
+          onClose={() => setChartingTarget(null)}
         />
       )}
     </div>
