@@ -28,6 +28,8 @@ import type { User } from '@supabase/supabase-js';
 import AnalysisModal from '@/components/analysis-modal';
 import SymbolSearch from '@/components/symbol-search';
 import PriceChart from '@/components/price-chart';
+import MarketTicker from '@/components/market-ticker';
+import WatchlistSection from '@/components/watchlist-section';
 
 // ==========================================
 // Types
@@ -113,6 +115,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [analyzingTarget, setAnalyzingTarget] = useState<ScalpingTarget | null>(null);
   const [chartingTarget, setChartingTarget] = useState<ScalpingTarget | null>(null);
+  // For watchlist chart (uses symbol string directly, not ScalpingTarget)
+  const [watchlistChart, setWatchlistChart] = useState<{ symbol: string; type: 'GLOBAL' | 'SITE' } | null>(null);
 
   // --- Data Fetching ---
   const fetchTargets = useCallback(async () => {
@@ -246,8 +250,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         </div>
       </nav>
 
+      {/* ====== Live Market Ticker ====== */}
+      <MarketTicker />
+
       {/* ====== Main Content ====== */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
         {/* --- Add Target Form --- */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
@@ -513,6 +520,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </motion.div>
           )}
         </section>
+
+        {/* ====== Watchlist Section ====== */}
+        <WatchlistSection
+          activeTargets={targets}
+          onChartOpen={(sym, type) => setWatchlistChart({ symbol: sym, type })}
+        />
       </main>
 
       {/* ====== Analysis Modal ====== */}
@@ -525,13 +538,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         />
       )}
 
-      {/* ====== Price Chart Modal ====== */}
+      {/* ====== Price Chart Modal (Target) ====== */}
       {chartingTarget && (
         <PriceChart
           symbol={chartingTarget.symbol}
           symbolType="GLOBAL"
           isOpen={!!chartingTarget}
           onClose={() => setChartingTarget(null)}
+        />
+      )}
+
+      {/* ====== Price Chart Modal (Watchlist) ====== */}
+      {watchlistChart && (
+        <PriceChart
+          symbol={watchlistChart.symbol}
+          symbolType={watchlistChart.type}
+          isOpen={!!watchlistChart}
+          onClose={() => setWatchlistChart(null)}
         />
       )}
     </div>
