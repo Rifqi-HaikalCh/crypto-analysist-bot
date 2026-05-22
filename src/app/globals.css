@@ -1,23 +1,33 @@
 @import "tailwindcss";
 
 /* ==========================================
-   AI Crypto Scalping Assistant — Design System
+   AI Crypto Scalping Assistant — Professional Light Theme
    ========================================== */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 :root {
-  --background: #030712;
-  --foreground: #f1f5f9;
+  --background: #FFF5E5;
+  --foreground: #111827; /* Dark gray for text */
+  --surface: #ffffff;
+  --border: #e5e7eb;
 
-  /* Accent Colors */
-  --cyan-glow: rgba(6, 182, 212, 0.15);
-  --emerald-glow: rgba(16, 185, 129, 0.15);
+  /* Brand Colors */
+  --primary: #D92243;
+  --primary-hover: #b91c39;
+  --secondary: #F69D39;
+  --tertiary: #E0C375;
 }
 
 /* ==========================================
@@ -26,7 +36,7 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 body {
@@ -36,42 +46,23 @@ body {
 }
 
 /* ==========================================
-   Animated Background Gradient
+   Professional Cards
    ========================================== */
 
-.bg-grid-pattern {
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
-  background-size: 64px 64px;
+.pro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.bg-radial-glow {
-  background: radial-gradient(
-    ellipse 80% 50% at 50% -20%,
-    var(--cyan-glow),
-    transparent
-  );
+.pro-card-hover {
+  transition: all 0.2s ease;
 }
 
-/* ==========================================
-   Glassmorphism Card
-   ========================================== */
-
-.glass-card {
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
-  border-radius: 1rem;
-}
-
-.glass-card-hover {
-  transition: all 0.3s ease;
-}
-
-.glass-card-hover:hover {
-  border-color: rgba(6, 182, 212, 0.3);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.05);
+.pro-card-hover:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(217, 34, 67, 0.1);
 }
 
 /* ==========================================
@@ -80,23 +71,23 @@ body {
 
 .input-field {
   width: 100%;
-  background: rgba(2, 6, 23, 0.8);
-  border: 1px solid rgb(51, 65, 85);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
   font-size: 0.875rem;
-  color: #f1f5f9;
+  color: var(--foreground);
   outline: none;
   transition: all 0.2s ease;
 }
 
 .input-field::placeholder {
-  color: rgb(71, 85, 105);
+  color: #9ca3af;
 }
 
 .input-field:focus {
-  border-color: rgba(6, 182, 212, 0.5);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(217, 34, 67, 0.1);
 }
 
 /* ==========================================
@@ -104,19 +95,16 @@ body {
    ========================================== */
 
 .btn-primary {
-  background: linear-gradient(135deg, #0891b2, #06b6d4);
+  background: var(--primary);
   color: white;
   font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #06b6d4, #22d3ee);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.35);
-  transform: translateY(-1px);
+  background: var(--primary-hover);
 }
 
 .btn-primary:active {
@@ -124,24 +112,21 @@ body {
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-.btn-danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 0.5rem;
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
   border-radius: 0.5rem;
   transition: all 0.2s ease;
 }
 
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
+.btn-secondary:hover {
+  filter: brightness(0.9);
 }
 
 /* ==========================================
@@ -156,30 +141,11 @@ body {
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(51, 65, 85, 0.3) 25%,
-    rgba(51, 65, 85, 0.5) 50%,
-    rgba(51, 65, 85, 0.3) 75%
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 0.5rem;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
-}
-
-.shake {
-  animation: shake 0.5s ease-in-out;
 }

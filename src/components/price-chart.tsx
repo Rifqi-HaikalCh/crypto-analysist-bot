@@ -338,7 +338,7 @@ export default function PriceChart({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/80 "
           />
 
           {/* Modal */}
@@ -348,10 +348,10 @@ export default function PriceChart({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ type: "spring", stiffness: 280, damping: 26 }}
-            className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60 md:inset-8 lg:inset-16"
+            className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-2xl border border-gray-300 bg-white shadow-2xl shadow-black/60 md:inset-8 lg:inset-16"
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-800 px-5 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-3">
               {/* Left: symbol + price */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2.5">
@@ -360,7 +360,7 @@ export default function PriceChart({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="font-bold text-white">{symbol}</h2>
+                      <h2 className="font-bold text-gray-900">{symbol}</h2>
                       <span
                         className={cn(
                           "rounded px-1.5 py-0.5 text-[10px] font-medium uppercase",
@@ -372,7 +372,7 @@ export default function PriceChart({
                         {symbolType}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-gray-500">
                       Binance Thailand
                     </p>
                   </div>
@@ -381,7 +381,7 @@ export default function PriceChart({
                 {/* Live price */}
                 {currentPrice && (
                   <div className="hidden items-center gap-2 sm:flex">
-                    <span className="text-xl font-bold text-white">
+                    <span className="text-xl font-bold text-gray-900">
                       ฿{formatPrice(currentPrice)}
                     </span>
                     {priceChange !== null && (
@@ -414,7 +414,7 @@ export default function PriceChart({
                     "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
                     isWsConnected
                       ? "bg-emerald-500/10 text-emerald-400"
-                      : "bg-slate-800 text-slate-500"
+                      : "bg-gray-100 text-gray-500"
                   )}
                 >
                   {isWsConnected ? (
@@ -428,7 +428,7 @@ export default function PriceChart({
                 </div>
 
                 {/* Timeframe selector */}
-                <div className="flex rounded-lg border border-slate-800 bg-slate-950/50 p-0.5">
+                <div className="flex rounded-lg border border-gray-200 bg-white/50 p-0.5">
                   {TIMEFRAMES.map((tf) => (
                     <button
                       key={tf.value}
@@ -436,8 +436,8 @@ export default function PriceChart({
                       className={cn(
                         "rounded-md px-2.5 py-1 text-xs font-semibold transition-all",
                         timeframe === tf.value
-                          ? "bg-cyan-500 text-white"
-                          : "text-slate-400 hover:text-white"
+                          ? "bg-cyan-500 text-gray-900"
+                          : "text-gray-600 hover:text-gray-900"
                       )}
                     >
                       {tf.label}
@@ -448,7 +448,7 @@ export default function PriceChart({
                 {/* Close */}
                 <button
                   onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -465,13 +465,13 @@ export default function PriceChart({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-slate-900/80 backdrop-blur-sm"
+                    className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/80 "
                   >
                     <div className="relative">
-                      <div className="h-12 w-12 animate-spin rounded-full border-2 border-slate-800 border-t-cyan-500" />
+                      <div className="h-12 w-12 animate-spin rounded-full border-2 border-gray-200 border-t-cyan-500" />
                       <RefreshCw className="absolute inset-0 m-auto h-5 w-5 text-cyan-400" />
                     </div>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-gray-600">
                       Memuat grafik {symbol}...
                     </p>
                   </motion.div>
@@ -488,10 +488,10 @@ export default function PriceChart({
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"
                   >
-                    <p className="text-slate-400">{error}</p>
+                    <p className="text-gray-600">{error}</p>
                     <button
                       onClick={() => initChart()}
-                      className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-700"
+                      className="rounded-lg bg-gray-100 px-4 py-2 text-sm text-gray-900 hover:bg-slate-700"
                     >
                       Coba Lagi
                     </button>
@@ -504,7 +504,7 @@ export default function PriceChart({
             </div>
 
             {/* Footer */}
-            <div className="flex shrink-0 items-center justify-between border-t border-slate-800 px-5 py-2 text-[11px] text-slate-600">
+            <div className="flex shrink-0 items-center justify-between border-t border-gray-200 px-5 py-2 text-[11px] text-gray-400">
               <span>Data: Binance.th · Timeframe: {timeframe.toUpperCase()}</span>
               <span className="flex items-center gap-1">
                 <span

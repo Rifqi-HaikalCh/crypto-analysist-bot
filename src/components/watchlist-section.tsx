@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import UnifiedTokenSearch, { type UnifiedResult } from "@/components/unified-token-search";
 import {
   TrendingUp,
   TrendingDown,
@@ -11,11 +12,13 @@ import {
   Brain,
   ChevronDown,
   Activity,
-  ArrowUpRight,
   ArrowDownRight,
+  Search,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ScalpingTarget } from "@/lib/supabase";
+import { getUserFavorites, updateUserFavorites } from "@/lib/supabase";
 import type { AnalysisResult } from "@/app/api/analyze/route";
 
 // ==========================================
@@ -32,6 +35,8 @@ type WatchlistItem = {
   high24h: number;
   low24h: number;
   type: "GLOBAL" | "SITE";
+  dataSource?: "BINANCE" | "DEXSCREENER";
+  contractAddress?: string;
 };
 
 type CardAnalysis = {
@@ -129,9 +134,9 @@ function AnalysisPanel({ analysis }: { analysis: CardAnalysis }) {
 
   if (analysis.status === "loading") {
     return (
-      <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2.5">
-        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-700 border-t-violet-500" />
-        <span className="text-xs text-slate-400">Gemini AI menganalisis...</span>
+      <div className="mt-3 flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-violet-500" />
+        <span className="text-xs text-gray-600">Gemini AI menganalisis...</span>
       </div>
     );
   }
@@ -164,7 +169,7 @@ function AnalysisPanel({ analysis }: { analysis: CardAnalysis }) {
         >
           <div className="flex items-center gap-1.5">
             <Brain className="h-3.5 w-3.5 text-violet-400" />
-            <span className="text-[11px] font-medium text-slate-400">
+            <span className="text-[11px] font-medium text-gray-600">
               Rekomendasi AI
             </span>
           </div>
@@ -179,40 +184,19 @@ function AnalysisPanel({ analysis }: { analysis: CardAnalysis }) {
         </div>
 
         {/* Alasan */}
-        <p className="text-[11px] leading-relaxed text-slate-400">{r.alasan}</p>
+        <p className="text-[11px] leading-relaxed text-gray-600">{r.alasan}</p>
 
-        {/* Indicators row */}
-        <div className="grid grid-cols-2 gap-1">
-          {[
-            { label: "Trend", value: r.indikator.trend },
-            { label: "Momentum", value: r.indikator.momentum },
-          ].map(({ label, value }) => {
-            const isGood = /bullish|kuat|tinggi/i.test(value);
-            const isBad = /bearish|lemah|rendah/i.test(value);
-            return (
-              <div
-                key={label}
-                className="rounded border border-slate-800 bg-slate-950/40 px-2 py-1"
-              >
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-600">
-                  {label}
-                </p>
-                <p
-                  className={cn(
-                    "text-[11px] font-semibold",
-                    isGood && "text-emerald-400",
-                    isBad && "text-red-400",
-                    !isGood && !isBad && "text-slate-300"
-                  )}
-                >
-                  {value}
-                </p>
-              </div>
-            );
-          })}
+        {/* Analisis Mendalam */}
+        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">
+            Analisis Mendalam
+          </p>
+          <p className="text-[11px] leading-relaxed text-gray-700">
+            {r.analisis_mendalam}
+          </p>
         </div>
 
-        <p className="text-[10px] text-slate-600">
+        <p className="text-[10px] text-gray-400">
           TF: {r.timeframes_analyzed.join(", ").toUpperCase()}
         </p>
       </motion.div>
@@ -228,9 +212,13 @@ function AnalysisPanel({ analysis }: { analysis: CardAnalysis }) {
 
 function WatchlistCard({
   item,
+  isFavorite,
+  onToggleFavorite,
   onChartClick,
 }: {
   item: WatchlistItem;
+  isFavorite: boolean;
+  onToggleFavorite: (symbol: string) => void;
   onChartClick: (item: WatchlistItem) => void;
 }) {
   const isPositive = item.change24h >= 0;
@@ -248,10 +236,16 @@ function WatchlistCard({
     if (!isExpanded) setIsExpanded(true);
 
     try {
+      const bodyPayload = {
+        symbol: item.symbol,
+        dataSource: item.dataSource || "BINANCE",
+        contractAddress: item.contractAddress,
+        analysisType: "watchlist"
+      };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol: item.symbol }),
+        body: JSON.stringify(bodyPayload),
       });
       const data = await res.json();
       if (data.success) {
@@ -279,155 +273,100 @@ function WatchlistCard({
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.3 }}
-      className="group relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 transition-all hover:border-slate-600"
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.2 }}
+      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:border-gray-300 shadow-sm shrink-0"
     >
-      {/* Trend glow */}
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100",
-          isPositive
-            ? "bg-gradient-to-br from-emerald-500/5 to-transparent"
-            : "bg-gradient-to-br from-red-500/5 to-transparent"
-        )}
-      />
-
-      {/* Main card content */}
-      <div className="relative p-4">
-        {/* Top row: coin + sparkline */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-700 to-slate-800 text-xs font-bold text-white shadow-inner">
-              {item.baseAsset.slice(0, 3)}
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-white">
-                  {item.baseAsset}
-                </span>
-                <span
-                  className={cn(
-                    "rounded px-1 py-0.5 text-[9px] font-medium uppercase",
-                    item.type === "SITE"
-                      ? "bg-amber-500/10 text-amber-500"
-                      : "bg-slate-700 text-slate-400"
-                  )}
-                >
-                  {item.quoteAsset}
-                </span>
-              </div>
-              <span className="text-[11px] text-slate-500">{item.symbol}</span>
-            </div>
-          </div>
-          <div className="opacity-70">
-            <MiniSparkline positive={isPositive} />
-          </div>
-        </div>
-
-        {/* Price row */}
-        <div className="mt-3 flex items-end justify-between">
-          <div>
-            <p className="text-xl font-bold text-white">
-              {currency}{formatPrice(item.price, item.quoteAsset)}
-            </p>
-          </div>
-          <div
-            className={cn(
-              "flex items-center gap-0.5 rounded-md px-2 py-1 text-sm font-bold",
-              isPositive
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "bg-red-500/10 text-red-400"
-            )}
-          >
-            {isPositive ? (
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            ) : (
-              <ArrowDownRight className="h-3.5 w-3.5" />
-            )}
-            {isPositive ? "+" : ""}
-            {item.change24h.toFixed(2)}%
-          </div>
-        </div>
-
-        {/* H/L bar */}
-        {item.high24h > 0 && (
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between text-[10px] text-slate-600">
-              <span>L: {currency}{formatPrice(item.low24h, item.quoteAsset)}</span>
-              <span>H: {currency}{formatPrice(item.high24h, item.quoteAsset)}</span>
-            </div>
-            <div className="relative h-1 w-full rounded-full bg-slate-800">
-              <div
-                className="h-1 rounded-full bg-gradient-to-r from-red-500 to-emerald-500"
-                style={{ width: `${pricePos}%` }}
-              />
-              {/* Current price indicator */}
-              <div
-                className="absolute top-1/2 h-2.5 w-0.5 -translate-y-1/2 rounded-full bg-white"
-                style={{ left: `${pricePos}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="mt-3 flex items-center gap-1.5 border-t border-slate-800 pt-3">
-          {/* Expand/Detail */}
+      {/* Main row */}
+      <div className="relative p-3 flex items-center justify-between gap-2">
+        
+        {/* Left: Coin info */}
+        <div className="flex items-center gap-2 min-w-0">
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-medium transition-all",
-              isExpanded
-                ? "border-slate-600 bg-slate-800 text-white"
-                : "border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300"
-            )}
+            onClick={() => onToggleFavorite(item.symbol)}
+            className="text-gray-400 transition-colors hover:text-amber-400 shrink-0"
           >
-            <Activity className="h-3.5 w-3.5" />
-            Detail
-            <ChevronDown
-              className={cn(
-                "h-3 w-3 transition-transform",
-                isExpanded && "rotate-180"
-              )}
+            <Star
+              className={cn("h-4 w-4", isFavorite && "fill-amber-400 text-amber-400")}
             />
           </button>
+          <div className="hidden sm:flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 font-bold text-gray-700">
+            {item.baseAsset.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] sm:text-sm font-bold leading-none text-gray-900 flex items-center gap-1.5 truncate">
+              <span className="truncate">{item.baseAsset}</span>
+              {item.dataSource === "DEXSCREENER" && (
+                <span className="text-[9px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-medium shrink-0">DEX</span>
+              )}
+            </p>
+            <p className="text-[10px] font-medium text-gray-500">
+              {item.symbol}
+            </p>
+          </div>
+        </div>
 
-          {/* Chart */}
+        {/* Mid: Price */}
+        <div className="flex items-center justify-end gap-3 shrink-0 ml-auto">
+          <div className="text-right">
+            <p className="text-[13px] sm:text-sm font-bold text-gray-900 tracking-tight">
+              {currency}{formatPrice(item.price, item.quoteAsset)}
+            </p>
+            <div className={cn(
+              "flex justify-end text-[11px] font-bold",
+              isPositive ? "text-emerald-500" : "text-red-500"
+            )}>
+              {isPositive ? "+" : ""}{item.change24h.toFixed(2)}%
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Actions (Icons only) */}
+        <div className="flex items-center justify-end gap-1.5 shrink-0 ml-2">
           <button
             onClick={() => onChartClick(item)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-800 py-2 text-[11px] font-medium text-slate-500 transition-all hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-400"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-all hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-500"
+            title="Grafik"
           >
-            <LineChart className="h-3.5 w-3.5" />
-            Grafik
+            <LineChart className="h-4 w-4" />
           </button>
-
-          {/* AI Analysis */}
+          
           <button
             onClick={runAnalysis}
             disabled={analysis.status === "loading"}
             className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-[11px] font-medium transition-all disabled:opacity-60",
+              "flex h-8 w-8 items-center justify-center rounded-lg border transition-all disabled:opacity-60",
               analysis.status === "done"
                 ? analysis.result?.keputusan === "BELI"
-                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                  : "border-red-500/30 bg-red-500/10 text-red-400"
-                : "border-slate-800 text-slate-500 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-violet-400"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-500"
+                  : "border-red-500/30 bg-red-500/10 text-red-500"
+                : "border-gray-200 text-gray-600 hover:bg-[var(--primary)] hover:text-white hover:border-transparent"
             )}
+            title={analysis.status === "done" ? analysis.result?.keputusan : "Analisis AI"}
           >
             {analysis.status === "loading" ? (
-              <div className="h-3 w-3 animate-spin rounded-full border border-slate-700 border-t-violet-400" />
+              <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-current" />
             ) : (
-              <Brain className="h-3.5 w-3.5" />
+              <Brain className="h-4 w-4" />
             )}
-            {analysis.status === "done"
-              ? analysis.result?.keputusan || "AI"
-              : "Analisis"}
+          </button>
+
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-lg border transition-all",
+              isExpanded
+                ? "border-gray-300 bg-gray-100 text-gray-900"
+                : "border-gray-200 text-gray-500 hover:bg-gray-50"
+            )}
+            title="Detail"
+          >
+            <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
           </button>
         </div>
+      </div>
 
         {/* Expanded detail panel */}
         <AnimatePresence>
@@ -439,39 +378,35 @@ function WatchlistCard({
               transition={{ duration: 0.25 }}
               className="overflow-hidden"
             >
-              <div className="mt-3 border-t border-slate-800 pt-3">
+              <div className="border-t border-gray-100 bg-gray-50/50 p-4">
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
-                    <p className="text-[10px] text-slate-500">Volume 24H</p>
-                    <p className="font-semibold text-white">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:flex sm:items-center text-xs">
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 flex-1">
+                    <p className="text-[10px] text-gray-500">Volume 24H</p>
+                    <p className="font-semibold text-gray-900">
                       {currency}{formatVolume(item.volume24h)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
-                    <p className="text-[10px] text-slate-500">High 24H</p>
-                    <p className="font-semibold text-emerald-400">
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 flex-1">
+                    <p className="text-[10px] text-gray-500">High 24H</p>
+                    <p className="font-semibold text-emerald-500">
                       {currency}{formatPrice(item.high24h, item.quoteAsset)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
-                    <p className="text-[10px] text-slate-500">Low 24H</p>
-                    <p className="font-semibold text-red-400">
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 flex-1">
+                    <p className="text-[10px] text-gray-500">Low 24H</p>
+                    <p className="font-semibold text-red-500">
                       {currency}{formatPrice(item.low24h, item.quoteAsset)}
                     </p>
                   </div>
-                  <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2">
-                    <p className="text-[10px] text-slate-500">Tipe Market</p>
-                    <p
-                      className={cn(
-                        "font-semibold",
-                        item.type === "SITE"
-                          ? "text-amber-400"
-                          : "text-cyan-400"
-                      )}
-                    >
-                      {item.type}
-                    </p>
+                  <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 flex-1">
+                    <p className="text-[10px] text-gray-500">H/L Position</p>
+                    <div className="mt-1 relative h-1.5 w-full rounded-full bg-gray-100">
+                      <div
+                        className="absolute h-1.5 rounded-full bg-gradient-to-r from-red-400 to-emerald-400"
+                        style={{ width: `${pricePos}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -482,7 +417,7 @@ function WatchlistCard({
                 {analysis.status === "idle" && (
                   <button
                     onClick={runAnalysis}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-violet-500/20 py-2.5 text-xs font-medium text-violet-300 transition-all hover:from-violet-500/30 hover:to-cyan-500/30"
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] py-2.5 text-xs font-medium text-white transition-all hover:bg-[#b01c36] shadow-sm shadow-red-500/20"
                   >
                     <Brain className="h-4 w-4" />
                     Jalankan Analisis AI — BELI atau JANGAN BELI?
@@ -492,7 +427,6 @@ function WatchlistCard({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
     </motion.div>
   );
 }
@@ -513,10 +447,31 @@ export default function WatchlistSection({
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [displayedSymbols, setDisplayedSymbols] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const allDataRef = useRef<Map<string, WatchlistItem>>(new Map());
-  const wsRef = useRef<WebSocket | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"ALL" | "FAV">("ALL");
+  const [favorites, setFavorites] = useState<string[]>([]);
+
   const wsGlobalRef = useRef<WebSocket | null>(null);
-  const rotateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const allDataRef = useRef<Map<string, WatchlistItem>>(new Map());
+  const rotateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load favorites from Database on mount
+  useEffect(() => {
+    getUserFavorites().then((favs) => {
+      setFavorites(favs);
+    });
+  }, []);
+
+  const handleToggleFavorite = useCallback((symbol: string) => {
+    setFavorites((prev) => {
+      const next = prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol];
+      updateUserFavorites(next).catch(() => {
+        console.error("Failed to update favorites in database");
+      });
+      return next;
+    });
+  }, []);
 
   const buildSymbolPool = useCallback(() => {
     const targetSymbols = activeTargets.map((t) => t.symbol);
@@ -554,6 +509,7 @@ export default function WatchlistSection({
           high24h: parseFloat(d.highPrice || "0"),
           low24h: parseFloat(d.lowPrice || "0"),
           type: THB_SYMBOLS.includes(symbol) ? "SITE" : "GLOBAL",
+          dataSource: "BINANCE",
         };
       } catch {
         return null;
@@ -562,12 +518,11 @@ export default function WatchlistSection({
     []
   );
 
-  const loadSymbols = useCallback(
-    async (symbols: string[]) => {
+    const loadSymbols = useCallback(
+    async (symbols: string[], limit?: number) => {
       setIsLoading(true);
-      const results = await Promise.all(
-        symbols.slice(0, CARDS_DISPLAYED).map(fetch24hr)
-      );
+      const toFetch = limit ? symbols.slice(0, limit) : symbols;
+      const results = await Promise.all(toFetch.map(fetch24hr));
       const valid = results.filter((r): r is WatchlistItem => r !== null);
       valid.forEach((item) => allDataRef.current.set(item.symbol, item));
       setItems(valid);
@@ -642,8 +597,50 @@ export default function WatchlistSection({
   );
 
   useEffect(() => {
-    loadSymbols(buildSymbolPool());
-  }, []); // eslint-disable-line
+    if (activeTab === "ALL") {
+      loadSymbols(buildSymbolPool(), CARDS_DISPLAYED);
+    } else {
+      if (favorites.length === 0) {
+        setItems([]);
+        setDisplayedSymbols([]);
+      } else {
+        loadSymbols(favorites);
+      }
+    }
+  }, [activeTab, favorites.length]); // intentionally missing some deps for clean tab switch
+
+  // Handle Search using UnifiedTokenSearch
+  const handleUnifiedSearchSelect = async (result: UnifiedResult, rate: number) => {
+    setSearchQuery(result.displayName);
+    setIsLoading(true);
+    let item: WatchlistItem | null = null;
+
+    if (result.source === "BINANCE" && result.binanceSymbol) {
+      item = await fetch24hr(result.binanceSymbol);
+    } else if (result.source === "DEXSCREENER" && result.dexToken) {
+      item = {
+        symbol: result.dexToken.symbol,
+        baseAsset: result.dexToken.name,
+        quoteAsset: "USD",
+        price: result.dexToken.priceUsd,
+        change24h: result.dexToken.priceChange?.h24 || 0,
+        volume24h: result.dexToken.volume24h || 0,
+        high24h: 0,
+        low24h: 0,
+        type: "GLOBAL",
+        dataSource: "DEXSCREENER",
+        contractAddress: result.dexToken.pairAddress,
+      };
+    }
+
+    if (item) {
+      allDataRef.current.set(item.symbol, item);
+      setItems([item]);
+    } else {
+      setItems([]);
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (displayedSymbols.length === 0) return;
@@ -660,59 +657,98 @@ export default function WatchlistSection({
   }, [displayedSymbols, connectWS]);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || searchQuery.trim() !== "" || activeTab === "FAV") return;
     rotateTimerRef.current = setInterval(rotateOne, ROTATE_INTERVAL);
     return () => {
       if (rotateTimerRef.current) clearInterval(rotateTimerRef.current);
     };
-  }, [isLoading, rotateOne]);
+  }, [isLoading, rotateOne, searchQuery, activeTab]);
 
   return (
-    <section className="mt-8">
-      <div className="mb-4 flex items-center justify-between">
+    <section className="flex flex-col h-full min-h-0">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <BarChart2 className="h-5 w-5 text-cyan-400" />
-          <h2 className="text-base font-bold text-white">Market Watchlist</h2>
-          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] text-slate-400">
-            Live · Rotasi otomatis
+          <BarChart2 className="h-5 w-5 text-[var(--primary)]" />
+          <h2 className="text-base font-bold text-gray-900">Market Watchlist</h2>
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
           </span>
         </div>
+        
+        <div className="flex items-center gap-2">
+          <UnifiedTokenSearch 
+            onSelect={handleUnifiedSearchSelect}
+            onClear={() => {
+              setSearchQuery("");
+              if (activeTab === "ALL") loadSymbols(shuffle(buildSymbolPool()), CARDS_DISPLAYED);
+              else loadSymbols(favorites);
+            }}
+            placeholder="Cari Binance/DEX..."
+            className="w-full sm:w-64"
+          />
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              if (activeTab === "ALL") loadSymbols(shuffle(buildSymbolPool()), CARDS_DISPLAYED);
+              else loadSymbols(favorites);
+            }}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 border border-gray-200"
+            title="Acak Ulang"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-3 flex items-center gap-4 border-b border-gray-100 pb-2 text-sm font-medium">
         <button
-          onClick={() => loadSymbols(shuffle(buildSymbolPool()))}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-slate-500 transition-colors hover:bg-slate-800 hover:text-white"
+          onClick={() => setActiveTab("ALL")}
+          className={cn("transition-colors", activeTab === "ALL" ? "text-[var(--primary)] border-b-2 border-[var(--primary)] pb-2 -mb-[9px]" : "text-gray-400 hover:text-gray-600")}
         >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Acak
+          Semua
+        </button>
+        <button
+          onClick={() => setActiveTab("FAV")}
+          className={cn("transition-colors", activeTab === "FAV" ? "text-[var(--primary)] border-b-2 border-[var(--primary)] pb-2 -mb-[9px]" : "text-gray-400 hover:text-gray-600")}
+        >
+          Favorit
         </button>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0 pr-1">
           {Array.from({ length: CARDS_DISPLAYED }).map((_, i) => (
             <div
               key={i}
-              className="h-44 animate-pulse rounded-xl border border-slate-800 bg-slate-900/40"
+              className="h-16 animate-pulse rounded-xl border border-gray-200 bg-gray-50 shrink-0"
             />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <AnimatePresence mode="popLayout">
-            {items.map((item) => (
-              <WatchlistCard
-                key={item.symbol}
-                item={item}
-                onChartClick={(i) => onChartOpen(i.symbol, i.type)}
-              />
-            ))}
+        <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0 pr-1">
+          <AnimatePresence>
+            {items.length === 0 && !isLoading ? (
+              <div className="py-10 text-center text-sm text-gray-400">
+                {activeTab === "FAV" ? "Belum ada koin favorit." : "Koin tidak ditemukan."}
+              </div>
+            ) : (
+              items.map((item) => (
+                <WatchlistCard
+                  key={item.symbol}
+                  item={item}
+                  isFavorite={favorites.includes(item.symbol)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onChartClick={(i) => onChartOpen(i.symbol, i.type)}
+                />
+              ))
+            )}
           </AnimatePresence>
         </div>
       )}
 
-      <p className="mt-3 text-center text-[11px] text-slate-600">
-        Klik <span className="text-slate-400">Detail</span> untuk stats ·{" "}
-        <span className="text-slate-400">Grafik</span> untuk chart live ·{" "}
-        <span className="text-slate-400">Analisis</span> untuk rekomendasi AI ·{" "}
+      <p className="mt-3 text-center text-[11px] text-gray-400">
+        Klik <span className="text-gray-600">Detail</span> untuk stats ·{" "}
+        <span className="text-gray-600">Grafik</span> untuk chart live ·{" "}
+        <span className="text-gray-600">Analisis</span> untuk rekomendasi AI ·{" "}
         <span className="text-amber-500/70">
           Koin Pluang (IDR) tidak tersedia di Binance.th
         </span>

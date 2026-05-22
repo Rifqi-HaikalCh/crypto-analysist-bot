@@ -37,10 +37,18 @@ export type ScalpingTarget = {
   id: string;
   user_id: string;
   symbol: string;
-  entry_price: number;
-  target_price: number;
+  asset_name: string | null;       // Nama lengkap aset (Bitcoin, Ethereum, dll)
+  entry_price: number;             // Harga masuk dalam IDR (untuk DEX) atau THB/USDT (Binance)
+  target_price: number;            // Auto: entry_price * 1.05
+  capital: number | null;          // Modal yang diinvestasikan
   status: "active" | "completed";
   created_at: string;
+  // DexScreener fields
+  data_source: "BINANCE" | "DEXSCREENER";
+  contract_address: string | null; // Contract address (DEX mode)
+  chain_id: string | null;         // Chain: ethereum, bsc, solana, base, dll
+  entry_price_usd: number | null;  // Harga masuk dalam USD (referensi DEX)
+  telegram_chat_id: string | null; // Telegram Chat ID milik user
 };
 
 // ==========================================
@@ -77,9 +85,16 @@ export async function getScalpingTargets(
  */
 export async function addScalpingTarget(
   symbol: string,
-  entryPrice: number
+  entryPrice: number,
+  assetName?: string,
+  capital?: number,
+  // DexScreener fields
+  dataSource: "BINANCE" | "DEXSCREENER" = "BINANCE",
+  contractAddress?: string,
+  chainId?: string,
+  entryPriceUsd?: number,
+  telegramChatId?: string
 ): Promise<ScalpingTarget | null> {
-  // Ambil user_id dari session yang aktif
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -95,6 +110,13 @@ export async function addScalpingTarget(
       user_id: user.id,
       symbol: symbol.toUpperCase(),
       entry_price: entryPrice,
+      asset_name: assetName || null,
+      capital: capital || null,
+      data_source: dataSource,
+      contract_address: contractAddress || null,
+      chain_id: chainId || null,
+      entry_price_usd: entryPriceUsd || null,
+      telegram_chat_id: telegramChatId || null,
     })
     .select()
     .single();
@@ -129,6 +151,31 @@ export async function updateScalpingTargetStatus(
 }
 
 /**
+ * Mengupdate detail scalping target (Harga Masuk & Modal).
+ * Target Price otomatis disesuaikan (+5%).
+ */
+export async function updateScalpingTargetDetails(
+  id: string,
+  entryPrice: number,
+  capital?: number
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("scalping_targets")
+    .update({ 
+      entry_price: entryPrice,
+      capital: capital || null
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating scalping target details:", error.message);
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Menghapus scalping target berdasarkan ID.
  * RLS memastikan user hanya bisa delete datanya sendiri.
  */
@@ -140,6 +187,57 @@ export async function deleteScalpingTarget(id: string): Promise<boolean> {
 
   if (error) {
     console.error("Error deleting scalping target:", error.message);
+    return false;
+  }
+
+  return true;
+}
+
+// ==========================================
+// Watchlist Favorites Functions
+// ==========================================
+
+/**
+ * Mengambil daftar simbol favorit milik user.
+ * Menggunakan tabel `user_favorites` (user_id, symbols).
+ */
+export async function getUserFavorites(): Promise<string[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("user_favorites")
+    .select("symbols")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error || !data) {
+    // Jika tidak ketemu (belum ada baris), kembalikan array kosong
+    return [];
+  }
+
+  return data.symbols as string[];
+}
+
+/**
+ * Menyimpan/memperbarui daftar simbol favorit milik user.
+ */
+export async function updateUserFavorites(symbols: string[]): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from("user_favorites")
+    .upsert({ user_id: user.id, symbols }, { onConflict: "user_id" });
+
+  if (error) {
+    console.error("Error updating user favorites:", error.message);
     return false;
   }
 

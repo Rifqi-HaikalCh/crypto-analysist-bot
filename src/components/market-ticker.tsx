@@ -132,15 +132,15 @@ export default function MarketTicker() {
   const displayTickers = [...tickers, ...tickers];
 
   return (
-    <div className="relative overflow-hidden border-b border-slate-800 bg-slate-950/80 backdrop-blur-sm">
+    <div className="relative overflow-hidden border-b border-gray-200 bg-white/80 ">
       {/* Left fade */}
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-slate-950 to-transparent" />
+      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-12 bg-gradient-to-r from-white to-transparent" />
       {/* Right fade */}
-      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-slate-950 to-transparent" />
+      <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-12 bg-gradient-to-l from-white to-transparent" />
 
       <div className="flex items-center gap-0 py-2">
         {/* Live badge */}
-        <div className="flex shrink-0 items-center gap-1.5 border-r border-slate-800 px-3 pr-4">
+        <div className="flex shrink-0 items-center gap-1.5 border-r border-gray-200 px-3 pr-4">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">
             Live
@@ -168,11 +168,11 @@ export default function MarketTicker() {
                   key={`${ticker.symbol}-${idx}`}
                   className="inline-flex items-center gap-2 px-1"
                 >
-                  <span className="text-xs font-semibold text-slate-300">
+                  <span className="text-xs font-semibold text-gray-700">
                     {ticker.symbol.replace("USDT", "")}
-                    <span className="text-slate-600">/USDT</span>
+                    <span className="text-gray-400">/USDT</span>
                   </span>
-                  <span className="text-xs font-mono text-white">
+                  <span className="text-xs font-mono text-gray-900">
                     ${price < 0.01
                       ? price.toFixed(6)
                       : price < 1

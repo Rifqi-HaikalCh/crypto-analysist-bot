@@ -94,7 +94,7 @@ export default function TelegramTestCard() {
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white ">
       {/* Header (always visible) */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -105,8 +105,8 @@ export default function TelegramTestCard() {
             <Bot className="h-5 w-5 text-blue-400" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-semibold text-white">Test Telegram Bot</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm font-semibold text-gray-900">Test Telegram Bot</p>
+            <p className="text-xs text-gray-500">
               Verifikasi koneksi & kirim pesan test
             </p>
           </div>
@@ -120,7 +120,7 @@ export default function TelegramTestCard() {
           )}
           <ChevronDown
             className={cn(
-              "h-4 w-4 text-slate-500 transition-transform",
+              "h-4 w-4 text-gray-500 transition-transform",
               isExpanded && "rotate-180"
             )}
           />
@@ -137,16 +137,16 @@ export default function TelegramTestCard() {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-slate-800 px-6 pb-5 pt-4">
+            <div className="border-t border-gray-200 px-6 pb-5 pt-4">
               {/* Step 1: Check bot */}
               <div className="mb-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Langkah 1 — Cek Status Bot
                 </p>
                 <button
                   onClick={checkBotStatus}
                   disabled={isChecking}
-                  className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm text-white transition-colors hover:bg-slate-700 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl border border-gray-300 bg-gray-100 px-4 py-2.5 text-sm text-gray-900 transition-colors hover:bg-slate-700 disabled:opacity-50"
                 >
                   {isChecking ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -159,7 +159,7 @@ export default function TelegramTestCard() {
 
               {/* Step 2: Send test messages */}
               <div className="mb-4">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Langkah 2 — Kirim Pesan Test
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -169,7 +169,7 @@ export default function TelegramTestCard() {
                       onClick={() => sendTest(btn.type)}
                       disabled={isSending !== null}
                       className={cn(
-                        "flex items-center gap-2 rounded-xl bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50",
+                        "flex items-center gap-2 rounded-xl bg-gradient-to-r px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-lg transition-all disabled:cursor-not-allowed disabled:opacity-50",
                         btn.color
                       )}
                     >
@@ -209,10 +209,10 @@ export default function TelegramTestCard() {
               </AnimatePresence>
 
               {/* Info */}
-              <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3 text-xs text-slate-500">
-                <p className="mb-1 font-semibold text-slate-400">Cara kerja:</p>
+              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+                <p className="mb-1 font-semibold text-gray-600">Cara kerja:</p>
                 <ul className="space-y-0.5 list-disc list-inside">
-                  <li>Bot diaktifkan lewat <code className="text-slate-300">npm run worker</code></li>
+                  <li>Bot diaktifkan lewat <code className="text-gray-700">npm run worker</code></li>
                   <li>Alert dikirim otomatis saat harga ≥ target profit 5%</li>
                   <li>Chat ID saat ini: <code className="text-cyan-400">{process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || "tersimpan di .env.local"}</code></li>
                 </ul>

@@ -117,7 +117,7 @@ export default function SymbolSearch({
     <div className={cn("relative", className)}>
       {/* Input */}
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
         <input
           ref={inputRef}
           type="text"
@@ -127,24 +127,24 @@ export default function SymbolSearch({
           placeholder={placeholder}
           autoComplete="off"
           spellCheck={false}
-          className="w-full rounded-xl border border-slate-700 bg-slate-800/60 py-3 pl-10 pr-9 text-sm font-medium uppercase tracking-wide text-white placeholder:text-slate-500 placeholder:normal-case placeholder:tracking-normal transition-all focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
+          className="w-full rounded-xl border border-gray-300 bg-gray-100/60 py-3 pl-10 pr-9 text-sm font-medium uppercase tracking-wide text-gray-900 placeholder:text-gray-500 placeholder:normal-case placeholder:tracking-normal transition-all focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/20"
         />
         {/* Right icon: loading / clear / chevron */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+            <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
           ) : query ? (
             <button
               type="button"
               onClick={handleClear}
-              className="text-slate-500 transition-colors hover:text-slate-300"
+              className="text-gray-500 transition-colors hover:text-gray-700"
             >
               <X className="h-4 w-4" />
             </button>
           ) : (
             <ChevronDown
               className={cn(
-                "h-4 w-4 text-slate-500 transition-transform",
+                "h-4 w-4 text-gray-500 transition-transform",
                 isOpen && "rotate-180"
               )}
             />
@@ -161,22 +161,22 @@ export default function SymbolSearch({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/50"
+            className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-gray-300 bg-white shadow-2xl shadow-black/50"
           >
             {isLoading && !hasFetched ? (
-              <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-400">
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Memuat daftar koin...
               </div>
             ) : filtered.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-slate-500">
+              <div className="px-4 py-3 text-sm text-gray-500">
                 Tidak ada koin yang cocok untuk &quot;{query}&quot;
               </div>
             ) : (
               <>
                 {/* Header label */}
-                <div className="border-b border-slate-800 px-4 py-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                <div className="border-b border-gray-200 px-4 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500">
                     {query ? `Hasil: ${filtered.length} koin` : "Populer"}
                   </p>
                 </div>
@@ -188,7 +188,7 @@ export default function SymbolSearch({
                     type="button"
                     onMouseDown={(e) => e.preventDefault()} // prevent blur before click
                     onClick={() => handleSelect(s)}
-                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-slate-800"
+                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-gray-100"
                   >
                     <div className="flex items-center gap-3">
                       {/* Coin icon placeholder */}
@@ -196,10 +196,10 @@ export default function SymbolSearch({
                         {s.baseAsset.slice(0, 3)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold text-gray-900">
                           {s.symbol}
                         </p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-gray-500">
                           {s.baseAsset} / {s.quoteAsset}
                         </p>
                       </div>

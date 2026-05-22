@@ -27,45 +27,12 @@ interface AnalysisModalProps {
   entryPrice: number;
   isOpen: boolean;
   onClose: () => void;
+  dataSource?: "BINANCE" | "DEXSCREENER";
+  contractAddress?: string | null;
+  analysisType?: "watchlist" | "scalping";
 }
 
-// ==========================================
-// Sub-components
-// ==========================================
 
-function IndicatorBadge({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
-  const isBullish = /bullish|tinggi|support|kuat/i.test(value);
-  const isBearish = /bearish|rendah|resistance|lemah/i.test(value);
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3">
-      <div className="flex items-center gap-2 text-slate-400">
-        {icon}
-        <span className="text-xs font-medium uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
-      <span
-        className={cn(
-          "text-xs font-bold uppercase tracking-wide",
-          isBullish && "text-emerald-400",
-          isBearish && "text-red-400",
-          !isBullish && !isBearish && "text-slate-300"
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
 
 // ==========================================
 // Main Component
@@ -76,12 +43,16 @@ export default function AnalysisModal({
   entryPrice,
   isOpen,
   onClose,
+  dataSource = "BINANCE",
+  contractAddress,
+  analysisType = "watchlist",
 }: AnalysisModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isBuy = result?.keputusan === "BELI";
+  const isDex = dataSource === "DEXSCREENER";
+  const isBuy = result?.keputusan === "BELI" || result?.keputusan === "NAIK";
 
   const runAnalysis = async () => {
     setIsLoading(true);
@@ -89,14 +60,17 @@ export default function AnalysisModal({
     setResult(null);
 
     try {
+      const body = isDex && contractAddress
+        ? { symbol, contractAddress, dataSource: "DEXSCREENER", analysisType }
+        : { symbol, dataSource: "BINANCE", analysisType };
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
-
       if (!data.success) {
         setError(data.error || "Analisis gagal. Silakan coba lagi.");
       } else {
@@ -127,7 +101,7 @@ export default function AnalysisModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -140,27 +114,31 @@ export default function AnalysisModal({
             onAnimationComplete={handleOpen}
             className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 px-4"
           >
-            <div className="rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/60">
+            <div className="pro-card shadow-xl">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)]">
                     <Brain className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-white">Analisis AI</h2>
-                    <p className="text-xs text-slate-400">
-                      <span className="font-mono font-semibold text-cyan-400">
+                    <h2 className="font-bold text-[var(--foreground)]">Analisis AI</h2>
+                    <p className="text-xs text-gray-500">
+                      <span className="font-mono font-semibold text-[var(--primary)]">
                         {symbol}
                       </span>{" "}
-                      · Harga Beli: ฿
-                      {new Intl.NumberFormat("th-TH").format(entryPrice)}
+                      · {isDex ? "DexScreener" : "Binance"}
+                      {" · "}
+                      {isDex
+                        ? `Rp${new Intl.NumberFormat("id-ID").format(entryPrice)}`
+                        : `฿${new Intl.NumberFormat("th-TH").format(entryPrice)}`
+                      }
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-800 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -179,19 +157,22 @@ export default function AnalysisModal({
                       className="flex flex-col items-center gap-4 py-10"
                     >
                       <div className="relative">
-                        <div className="h-16 w-16 rounded-full border-2 border-slate-800" />
-                        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-2 border-transparent border-t-violet-500" />
-                        <Brain className="absolute inset-0 m-auto h-6 w-6 text-violet-400" />
+                        <div className="h-16 w-16 rounded-full border-2 border-gray-100" />
+                        <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-2 border-transparent border-t-[var(--primary)]" />
+                        <Brain className="absolute inset-0 m-auto h-6 w-6 text-[var(--primary)]" />
                       </div>
                       <div className="text-center">
-                        <p className="font-medium text-white">
+                        <p className="font-medium text-[var(--foreground)]">
                           Menganalisis {symbol}...
                         </p>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Mengambil data 1H & 4H dari Binance .th
+                        <p className="mt-1 text-sm text-gray-500">
+                          {isDex
+                            ? "Mengambil data dari DexScreener"
+                            : "Mengambil data 1H & 4H dari Binance .th"
+                          }
                         </p>
                       </div>
-                      <div className="flex gap-2 text-xs text-slate-600">
+                      <div className="flex gap-2 text-xs text-gray-400">
                         <Loader2 className="h-3 w-3 animate-spin" />
                         Powered by Gemini AI
                       </div>
@@ -207,18 +188,18 @@ export default function AnalysisModal({
                       exit={{ opacity: 0 }}
                       className="flex flex-col items-center gap-4 py-8"
                     >
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10">
-                        <XCircle className="h-7 w-7 text-red-400" />
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
+                        <XCircle className="h-7 w-7 text-red-500" />
                       </div>
                       <div className="text-center">
-                        <p className="font-medium text-red-400">
+                        <p className="font-medium text-red-600">
                           Analisis Gagal
                         </p>
-                        <p className="mt-1 text-sm text-slate-400">{error}</p>
+                        <p className="mt-1 text-sm text-gray-600">{error}</p>
                       </div>
                       <button
                         onClick={runAnalysis}
-                        className="rounded-lg bg-slate-800 px-4 py-2 text-sm text-white transition-colors hover:bg-slate-700"
+                        className="btn-primary mt-2"
                       >
                         Coba Lagi
                       </button>
@@ -246,23 +227,23 @@ export default function AnalysisModal({
                         className={cn(
                           "flex items-center justify-center gap-3 rounded-xl border py-5",
                           isBuy
-                            ? "border-emerald-500/30 bg-emerald-500/10"
-                            : "border-red-500/30 bg-red-500/10"
+                            ? "border-emerald-200 bg-emerald-50"
+                            : "border-red-200 bg-red-50"
                         )}
                       >
                         {isBuy ? (
-                          <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+                          <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                         ) : (
-                          <XCircle className="h-8 w-8 text-red-400" />
+                          <XCircle className="h-8 w-8 text-red-600" />
                         )}
                         <div>
-                          <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                            Rekomendasi AI
+                          <p className="text-xs font-medium uppercase tracking-widest text-gray-500">
+                            {analysisType === "scalping" ? "Prediksi Tren AI" : "Rekomendasi AI"}
                           </p>
                           <p
                             className={cn(
                               "text-3xl font-black tracking-tight",
-                              isBuy ? "text-emerald-400" : "text-red-400"
+                              isBuy ? "text-emerald-600" : "text-red-600"
                             )}
                           >
                             {result.keputusan}
@@ -271,55 +252,40 @@ export default function AnalysisModal({
                       </motion.div>
 
                       {/* Alasan */}
-                      <div className="rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-4">
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4">
                         <div className="mb-2 flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-amber-400" />
-                          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          <Zap className="h-4 w-4 text-[var(--secondary)]" />
+                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">
                             Analisis
                           </span>
                         </div>
-                        <p className="text-sm leading-relaxed text-slate-200">
+                        <p className="text-sm leading-relaxed text-gray-800">
                           {result.alasan}
                         </p>
                       </div>
 
                       {/* Indicators */}
                       <div className="space-y-2">
-                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
                           <BarChart3 className="h-3.5 w-3.5" />
-                          Indikator Teknikal
+                          Analisis Mendalam
                         </p>
-                        <IndicatorBadge
-                          label="Trend"
-                          value={result.indikator.trend}
-                          icon={<TrendingUp className="h-3.5 w-3.5" />}
-                        />
-                        <IndicatorBadge
-                          label="Momentum"
-                          value={result.indikator.momentum}
-                          icon={<Activity className="h-3.5 w-3.5" />}
-                        />
-                        <IndicatorBadge
-                          label="Volume"
-                          value={result.indikator.volume}
-                          icon={<BarChart3 className="h-3.5 w-3.5" />}
-                        />
-                        <IndicatorBadge
-                          label="Support/Resistance"
-                          value={result.indikator.support_resistance}
-                          icon={<Layers className="h-3.5 w-3.5" />}
-                        />
+                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-4 shadow-sm">
+                          <p className="text-sm leading-relaxed text-gray-700">
+                            {result.analisis_mendalam}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between border-t border-slate-800 pt-3 text-xs text-slate-600">
+                      <div className="flex items-center justify-between border-t border-gray-200 pt-3 text-xs text-gray-500">
                         <span>
                           Timeframe:{" "}
                           {result.timeframes_analyzed.join(", ").toUpperCase()}
                         </span>
                         <button
                           onClick={runAnalysis}
-                          className="flex items-center gap-1 text-slate-500 transition-colors hover:text-cyan-400"
+                          className="flex items-center gap-1 text-gray-500 transition-colors hover:text-[var(--primary)]"
                         >
                           <Loader2 className="h-3 w-3" />
                           Analisis Ulang

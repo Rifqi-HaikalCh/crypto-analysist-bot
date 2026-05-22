@@ -39,7 +39,7 @@ export default function Home() {
           <div className="relative">
             <div className="w-12 h-12 rounded-full border-2 border-cyan-500/20 border-t-cyan-500 animate-spin" />
           </div>
-          <p className="text-slate-500 text-sm font-medium">
+          <p className="text-gray-500 text-sm font-medium">
             Memuat aplikasi...
           </p>
         </motion.div>
