@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { Groq } from "groq-sdk";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+function getGroq() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+  });
+}
 
 export const maxDuration = 30; // Max execution time 30s
 export const revalidate = 3600; // Cache for 1 hour
@@ -24,7 +26,7 @@ ATURAN:
 2. 'message' maksimal 6-8 kata, jelas, dan berbahasa Indonesia.
 3. Wajib memuat kelima koin tersebut.`;
 
-    const chatCompletion = await groq.chat.completions.create({
+    const chatCompletion = await getGroq().chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "llama-3.3-70b-versatile",
       temperature: 0.3,

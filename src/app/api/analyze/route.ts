@@ -3,19 +3,21 @@ import { GoogleGenAI } from "@google/genai";
 import { Groq } from "groq-sdk";
 
 // ==========================================
-// Gemini AI Client
+// Lazy AI Clients (instantiated at request time, not build time)
 // ==========================================
-// FIX: Set vertexai=false agar SDK tidak switch ke Vertex AI
-// meskipun ada env var GOOGLE_CLOUD_PROJECT dari sistem.
 
-const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-  vertexai: false,
-});
+function getGenAI() {
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY!,
+    vertexai: false,
+  });
+}
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY, // Default uses process.env.GROQ_API_KEY
-});
+function getGroq() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+  });
+}
 
 const BINANCE_API_URL = process.env.BINANCE_API_URL || "https://api.binance.th";
 // Model: gunakan gemini-2.5-flash (lebih hemat quota) atau gemini-2.0-flash
@@ -192,7 +194,7 @@ Fokus pada: trend multi-timeframe, posisi harga terhadap SMA, momentum volume, d
   // Try with primary model, fallback to gemini-2.5-flash if rate limited
   let response;
   try {
-    response = await genAI.models.generateContent({
+    response = await getGenAI().models.generateContent({
       model: GEMINI_MODEL,
       contents: prompt,
       config: {
@@ -205,7 +207,7 @@ Fokus pada: trend multi-timeframe, posisi harga terhadap SMA, momentum volume, d
     if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("503")) {
       try {
         console.warn("Gemini limit reached in analyzeWithGemini, falling back to Groq...");
-        const chatCompletion = await groq.chat.completions.create({
+        const chatCompletion = await getGroq().chat.completions.create({
           messages: [{ role: "user", content: prompt }],
           model: "llama-3.3-70b-versatile",
           temperature: 0.3,
@@ -356,7 +358,7 @@ ATURAN RESPONS:
 
   let response;
   try {
-    response = await genAI.models.generateContent({
+    response = await getGenAI().models.generateContent({
       model: GEMINI_MODEL,
       contents: prompt,
       config: { temperature: 0.3, maxOutputTokens: 1024 },
@@ -366,7 +368,7 @@ ATURAN RESPONS:
     if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("503")) {
       try {
         console.warn("Gemini limit reached in analyzeWithGeminiDex, falling back to Groq...");
-        const chatCompletion = await groq.chat.completions.create({
+        const chatCompletion = await getGroq().chat.completions.create({
           messages: [{ role: "user", content: prompt }],
           model: "llama-3.3-70b-versatile",
           temperature: 0.3,

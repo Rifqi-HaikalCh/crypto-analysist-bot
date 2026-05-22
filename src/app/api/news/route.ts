@@ -2,14 +2,18 @@ import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { Groq } from "groq-sdk";
 
-const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-  vertexai: false,
-});
+function getGenAI() {
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY!,
+    vertexai: false,
+  });
+}
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY, // Default uses process.env.GROQ_API_KEY
-});
+function getGroq() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+  });
+}
 
 export const maxDuration = 60; // Allow enough time for AI response
 
@@ -26,7 +30,7 @@ Aturan penulisan:
   let responseText = "";
 
   try {
-    const response = await genAI.models.generateContent({
+    const response = await getGenAI().models.generateContent({
       model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -40,7 +44,7 @@ Aturan penulisan:
     if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("503")) {
       try {
         console.warn("Gemini limit reached in News generation, falling back to Groq...");
-        const chatCompletion = await groq.chat.completions.create({
+        const chatCompletion = await getGroq().chat.completions.create({
           messages: [{ role: "user", content: prompt }],
           model: "llama-3.3-70b-versatile",
           temperature: 0.7,
