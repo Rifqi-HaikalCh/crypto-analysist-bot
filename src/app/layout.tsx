@@ -25,6 +25,12 @@ export const metadata: Metadata = {
     "AI analysis",
     "telegram alert",
   ],
+  icons: {
+    icon: [
+      { url: '/logo-cryp.webp', type: 'image/webp' },
+    ],
+    apple: '/logo-cryp.webp',
+  },
 };
 
 export default function RootLayout({
